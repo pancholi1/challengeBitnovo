@@ -1,16 +1,54 @@
 import { StyleSheet, Text, View, Image, Pressable } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
+import QRCode from "react-native-qrcode-svg";
+import { router, useLocalSearchParams } from "expo-router";
+const qrRequestScreen = () => {
+  const params = useLocalSearchParams();
+  const { fiat_amount, url, fiat, identifier } = params;
+  useEffect(() => {
+    const createWebSocket = () => {
+      const socketURL = `wss://payments.smsdata.com/ws/merchant/${identifier}`;
+      const socket = new WebSocket(socketURL);
+      socket.onopen = () => {
+        console.log("Conexión establecida");
+      };
 
-const qr = () => {
+      socket.onmessage = (event) => {
+        console.log("Mensaje recibido del servidor:", event.data);
+        router.replace("/paymentMade");
+      };
+      socket.onclose = (event) => {
+        console.log(
+          "Conexión cerrada. Código:",
+          event.code,
+          "Razón:",
+          event.reason
+        );
+      };
+    };
+    // Llamamos a la función para crear el WebSocket cuando el componente se monta
+    createWebSocket();
+  }, [identifier]);
+
   return (
     <View style={styles.container}>
       <View style={styles.infoContainer}>
-        <Image source={require("../../assets/images/info.png")}></Image>
+        <Image source={require("../assets/images/info.png")}></Image>
         <Text style={styles.infoText}>
           Muestra este QR y será redirigido a la pasarela de pago.
         </Text>
       </View>
-      <View style={styles.quadQr}></View>
+      <View style={styles.quadQr}>
+        <QRCode
+          value={typeof url == "string" ? url : ""}
+          size={300}
+          color="#002859"
+        />
+        <Text style={styles.textFiat}>
+          {fiat_amount} {fiat}
+        </Text>
+      </View>
+
       <Text style={styles.refreshText}>
         Esta pantalla se actualizará automáticamente.
       </Text>
@@ -25,7 +63,7 @@ const qr = () => {
             </Text>
             <Image
               style={{ opacity: pressed ? 0.1 : 1 }}
-              source={require("../../assets/images/printer.png")}
+              source={require("../assets/images/printer.png")}
             ></Image>
           </View>
         )}
@@ -34,7 +72,7 @@ const qr = () => {
   );
 };
 
-export default qr;
+export default qrRequestScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -71,9 +109,21 @@ const styles = StyleSheet.create({
     letterSpacing: 0.14,
   },
   quadQr: {
+    alignItems: "center",
+    display: "flex",
+    justifyContent: "center",
     width: "100%",
     height: 375,
     backgroundColor: "#fff",
+    borderRadius: 6,
+  },
+  textFiat: {
+    fontSize: 25,
+    fontFamily: "Mulish",
+    fontWeight: "700",
+    color: "#002859",
+    lineHeight: 39,
+    marginVertical: 8,
   },
   pressableButtonPrint: {
     paddingHorizontal: 24,

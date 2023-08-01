@@ -1,18 +1,63 @@
-import { StyleSheet, Text, View, Pressable, Image } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  Image,
+  Share,
+  Alert,
+  Linking,
+} from "react-native";
 import React, { useEffect, useState } from "react";
-import { Link } from "expo-router";
-import { ContentPayment } from "@/components/paymentRequest";
+import { useRouter, useLocalSearchParams, Link } from "expo-router";
+import { ContentPayment } from "../components/paymentRequest";
 
-interface PropsRequest {
-  payment: number;
+interface PropsPayment {
+  identifier: string;
+  short_identifier: string;
+  fiat_amount: number;
+  fiat: string;
+  language: string;
+  web_url: string;
 }
-const paymentRequest = () => {
-  const [data, setData] = useState<any>();
+const paymentRequestScreen = () => {
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const { payment, fiat } = params;
+  const [data, setData] = useState<PropsPayment>();
+
+  const onShare = async () => {
+    try {
+      const result = await Share.share({
+        message:
+          "React Native | A framework for building native apps using React",
+      });
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          // shared with activity type of result.activityType
+        } else {
+          // shared
+        }
+      } else if (result.action === Share.dismissedAction) {
+        // dismissed
+      }
+    } catch (error: any) {
+      Alert.alert(error.message);
+    }
+  };
+
+  const goTogateWay = () => {
+    data?.web_url && Linking.openURL(data?.web_url);
+  };
+
   useEffect(() => {
     const apiUrl = "https://payments.smsdata.com/api/v1/orders/";
     const postData = {
-      // Datos que deseas enviar en el body del POST
-      expected_output_amount: 123123,
+      expected_output_amount: payment,
+      merchant_urlko: "https://www.google.com/?hl=es",
+      merchant_url_standby: "https://www.google.com/?hl=es",
+      merchant_urlok: "https://www.google.com/?hl=es",
+      fiat: fiat,
     };
 
     fetch(apiUrl, {
@@ -23,19 +68,19 @@ const paymentRequest = () => {
       },
       body: JSON.stringify(postData), // Convertir los datos a JSON
     })
-      .then((response) => {
-        console.log(response);
+      .then((response) => response.json())
+      .then((data: PropsPayment) => {
+        setData(data);
       })
-      .then((data) => setData(data))
       .catch((error) => console.error(error));
   }, []);
-  useEffect(() => {}, []);
+
   return (
     <View style={styles.container}>
-      <ContentPayment />
+      <ContentPayment data={data} />
       <View style={styles.containerButtons}>
-        <Link href={"/paymentRequest/paymentRequest"} asChild>
-          <Pressable style={styles.pressableButton}>
+        <Link href={"/"} asChild>
+          <Pressable style={styles.pressableButton} onPress={goTogateWay}>
             {({ pressed }) => (
               <View style={styles.contentButton}>
                 <Text
@@ -45,13 +90,13 @@ const paymentRequest = () => {
                 </Text>
                 <Image
                   style={{ opacity: pressed ? 0.1 : 1 }}
-                  source={require("../../assets/images/arrowRight.png")}
+                  source={require("../assets/images/arrowRight.png")}
                 ></Image>
               </View>
             )}
           </Pressable>
         </Link>
-        <Pressable style={styles.pressableButtonShared} onPress={() => {}}>
+        <Pressable style={styles.pressableButtonShared} onPress={onShare}>
           {({ pressed }) => (
             <View style={styles.contentButton}>
               <Text
@@ -64,12 +109,12 @@ const paymentRequest = () => {
               </Text>
               <Image
                 style={{ opacity: pressed ? 0.1 : 1 }}
-                source={require("../../assets/images/downloadButton.png")}
+                source={require("../assets/images/downloadButton.png")}
               ></Image>
             </View>
           )}
         </Pressable>
-        <Pressable style={styles.onlyTextButto}>
+        <Pressable style={styles.onlyTextButto} onPress={router.back}>
           {({ pressed }) => (
             <Text
               style={[styles.textButtonShared, { opacity: pressed ? 0.1 : 1 }]}
@@ -83,7 +128,7 @@ const paymentRequest = () => {
   );
 };
 
-export default paymentRequest;
+export default paymentRequestScreen;
 
 const styles = StyleSheet.create({
   container: {

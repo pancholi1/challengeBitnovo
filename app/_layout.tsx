@@ -5,9 +5,9 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { SplashScreen, Stack } from "expo-router";
+import { Link, SplashScreen, Stack, router } from "expo-router";
 import { useEffect } from "react";
-import { useColorScheme } from "react-native";
+import { Image, Pressable, useColorScheme } from "react-native";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -16,7 +16,7 @@ export {
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: "(tabs)",
+  initialRouteName: "",
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -25,6 +25,7 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+    Mulish: require("../assets/fonts/Mulish-Regular.ttf"),
     ...FontAwesome.font,
   });
 
@@ -52,13 +53,32 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="paymentRequest" options={{ headerShown: false }} />
         <Stack.Screen
-          name="/qrRequest/QrRequest"
+          name="qrRequest"
           options={{
-            title: "Tab Two",
+            headerTitle: () => (
+              <Image source={require("../assets/images/bitnovoLogo.png")} />
+            ),
+            headerTitleAlign: "center",
+
+            headerLeft: () => {
+              return (
+                <Pressable onPress={router.back} style={{ paddingLeft: 8 }}>
+                  <Image source={require("../assets/images/iconQr.png")} />
+                </Pressable>
+              );
+            },
+          }}
+        />
+        <Stack.Screen
+          name="paymentMade"
+          options={{
+            headerTitle: () => (
+              <Image source={require("../assets/images/bitnovoLogo.png")} />
+            ),
+            headerTitleAlign: "center",
           }}
         />
       </Stack>

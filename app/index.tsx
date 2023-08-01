@@ -1,11 +1,12 @@
-import { Alert, Image, Pressable, StyleSheet } from "react-native";
-import { Text, View } from "@/components/Themed";
+import { Image, Pressable, StyleSheet, View, Text } from "react-native";
 import { useState } from "react";
 import { Link } from "expo-router";
+import { ModalFiat } from "../components/ModalFiat/index";
 
-export default function TabOneScreen() {
+export default function MakePayScreen() {
   const [input, setInput] = useState("");
-
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedFiat, setSelectedFiat] = useState("EUR");
   const addNumber = (e: string) => {
     setInput(input + e);
   };
@@ -15,11 +16,45 @@ export default function TabOneScreen() {
   const numberWithCommas = (number: number) => {
     return number.toLocaleString("es-ES"); // Aplica el formato con comas según la configuración de españa
   };
+
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        modalVisible
+          ? {
+              backgroundColor: "#ebeffa",
+              opacity: 0.1,
+              borderWidth: 1,
+              borderColor: "#dae0f2",
+            }
+          : {},
+      ]}
+    >
+      <View style={styles.header}>
+        <View style={styles.badge}>
+          <Image source={require("../assets/images/arrowLeft.png")} />
+        </View>
+        <Text style={styles.textHeader}> Solictar pago</Text>
+
+        <Pressable
+          onPress={() => {
+            setModalVisible(true);
+          }}
+        >
+          {({ pressed }) => (
+            <View style={[styles.badge, { opacity: pressed ? 0.1 : 1 }]}>
+              <Text style={styles.textBagde}>{selectedFiat}</Text>
+              <Image source={require("../assets/images/arrowDown.png")} />
+            </View>
+          )}
+        </Pressable>
+      </View>
+
       <View style={styles.containerTotal}>
         <Text style={styles.title}>
-          {input !== "" ? numberWithCommas(Number(input)) : "0"},00 €
+          {input !== "" ? numberWithCommas(Number(input)) : "0,00"}{" "}
+          {selectedFiat}
         </Text>
       </View>
 
@@ -106,33 +141,43 @@ export default function TabOneScreen() {
         </View>
         <View style={styles.rowNumbers}>
           <Pressable style={styles.pressableNumber}>
-            <Image
-              // style={styles.img_logo}
-              source={require("../../assets/images/iconBitnovo.png")}
-            ></Image>
+            <Image source={require("../assets/images/iconBitnovo.png")}></Image>
           </Pressable>
           <Pressable style={styles.pressableNumber}>
             <Text style={styles.textNumber}>0</Text>
           </Pressable>
           <Pressable style={styles.pressableNumber} onPress={addDelete}>
-            <Image
-              // style={styles.img_logo}
-              source={require("../../assets/images/arrowBack.png")}
-            ></Image>
+            <Image source={require("../assets/images/arrowBack.png")}></Image>
           </Pressable>
         </View>
       </View>
 
       <View style={styles.containerButtons}>
-        <Link href={"/paymentRequest/paymentRequest"} asChild>
+        {input && (
           <Pressable style={styles.pressableButton}>
             {({ pressed }) => (
-              <Text style={[styles.textButton, { opacity: pressed ? 0.1 : 1 }]}>
-                Solcitar
-              </Text>
+              <Link
+                style={styles.containerLink}
+                href={{
+                  pathname: "/paymentRequest",
+                  params: { payment: input, fiat: selectedFiat },
+                }}
+              >
+                <Text
+                  style={[styles.textButton, { opacity: pressed ? 0.1 : 1 }]}
+                >
+                  Solcitar
+                </Text>
+              </Link>
             )}
           </Pressable>
-        </Link>
+        )}
+        {!input && (
+          <View style={styles.pressableButtonDisable}>
+            <Text style={styles.textButton}>Solcitar</Text>
+          </View>
+        )}
+
         <Pressable
           style={styles.pressableButtonRestart}
           onPress={() => {
@@ -148,6 +193,13 @@ export default function TabOneScreen() {
           )}
         </Pressable>
       </View>
+      {modalVisible && (
+        <ModalFiat
+          setSelectedFiat={setSelectedFiat}
+          setModalVisible={setModalVisible}
+          modalVisible={modalVisible}
+        />
+      )}
     </View>
   );
 }
@@ -158,7 +210,43 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     display: "flex",
+    paddingTop: 0,
+    backgroundColor: "#fff",
+  },
+  header: {
+    alignItems: "center",
+    justifyContent: "space-between",
+    display: "flex",
+    width: "100%",
+    flexDirection: "row",
+    height: 60,
     padding: 18,
+    borderBottomColor: "#eee",
+    borderBottomWidth: 1,
+  },
+  badge: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#EFF2F7",
+    borderRadius: 24,
+    padding: 6,
+    gap: 8,
+  },
+  textHeader: {
+    fontSize: 18,
+    fontFamily: "Mulish",
+    fontWeight: "700",
+    color: "#002859",
+    lineHeight: 22,
+  },
+  textBagde: {
+    fontSize: 12,
+    fontFamily: "Mulish",
+    fontWeight: "700",
+    color: "#002859",
+    lineHeight: 15,
   },
   containerTotal: {
     marginTop: "auto",
@@ -166,6 +254,7 @@ const styles = StyleSheet.create({
   },
   containerNumber: {
     width: "100%",
+    padding: 18,
   },
   title: {
     fontSize: 40,
@@ -208,6 +297,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     marginTop: 40,
+    padding: 18,
+  },
+  pressableButtonDisable: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    padding: 18,
+    backgroundColor: "#035AC5",
+    borderRadius: 6,
+    opacity: 0.2,
   },
   pressableButton: {
     display: "flex",
@@ -241,5 +341,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#B91C1C",
     lineHeight: 20,
+  },
+
+  containerLink: {
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    textAlign: "center",
   },
 });
